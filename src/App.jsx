@@ -10,6 +10,7 @@ function App() {
       <Typography variant="body2" color="text.secondary">
         Gaear
       </Typography>
+
       <Button variant="text">Text</Button>
       <Button variant="contained">Contained</Button>
       <Button variant="outlined">Outlined</Button>
