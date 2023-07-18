@@ -16,7 +16,7 @@ function ModeSelect() {
   const handleChange = (event) => {
     const selectMode = event.target.value;
     setMode(selectMode);
-    console.log(selectMode, "select mode");
+    // console.log(selectMode, "select mode");
   };
 
   return (

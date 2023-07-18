@@ -1,13 +1,18 @@
 import { purple, cyan, deepOrange, orange, teal } from "@mui/material/colors";
 import { experimental_extendTheme as extendTheme } from "@mui/material/styles";
 
+const APP_BAR_HEIGHT = "58px";
+const BOARD_BAR_HEIGHT = "68px";
+const BOARD_CONTENT_HEIGHT = `calc(100vh - (${APP_BAR_HEIGHT} + ${BOARD_BAR_HEIGHT}))`;
+
 // Create a theme instance.
 const theme = extendTheme(
   {
     //custom trello
-    trelloCustom: {
-      appBarHeight: "58px",
-      boardBarHeight: "68px",
+    trello: {
+      appBarHeight: APP_BAR_HEIGHT,
+      boardBarHeight: BOARD_BAR_HEIGHT,
+      boardContentHeight: BOARD_CONTENT_HEIGHT,
     },
 
     // this color global app
@@ -51,6 +56,14 @@ const theme = extendTheme(
             // Some CSS
             textTransform: "none",
             borderWidth: "0.5px",
+          },
+        },
+      },
+      MuiTypography: {
+        styleOverrides: {
+          // Name of the slot
+          root: {
+            "&.MuiTypography-body1": { fontSize: "0.875rem" },
           },
         },
       },
