@@ -19,12 +19,14 @@ function AppBar() {
     <Box
       px={2}
       sx={{
-        backgroundColor: "#fff",
+        // backgroundColor: "primary.light",
         width: "100%",
         height: (theme) => theme.trelloCustom.appBarHeight,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
+        gap: 2,
+        overflowX: "auto",
       }}
     >
       <Box
@@ -45,6 +47,7 @@ function AppBar() {
           <SvgIcon
             component={TrelloIcon}
             inheritViewBox
+            // fontSize="small"
             sx={{ color: "primary.main" }}
           />
           <Typography
@@ -59,21 +62,27 @@ function AppBar() {
           </Typography>
         </Box>
 
-        <Workspaces />
-        <Recents />
-        <Starred />
-        <Templates />
-        <Button variant="outlined">Create</Button>
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
+          <Workspaces />
+          <Recents />
+          <Starred />
+          <Templates />
+          <Button variant="outlined">Create</Button>
+        </Box>
       </Box>
 
       <Box
         sx={{
           display: "flex",
-          gap: 2,
+          gap: 1,
           alignItems: "center",
         }}
       >
         <TextField
+          sx={{ minWidth: 80 }}
+          InputLabelProps={{
+            style: { color: "primary.dark" },
+          }}
           id="outlined-search"
           label="Search..."
           size="small"
