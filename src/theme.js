@@ -7,23 +7,23 @@ const theme = extendTheme(
     //custom trello
     trelloCustom: {
       appBarHeight: "58px",
-      boardBarHeight: "58px",
+      boardBarHeight: "68px",
     },
 
     // this color global app
     colorSchemes: {
-      light: {
-        palette: {
-          primary: teal,
-          secondary: deepOrange,
-        },
-      },
-      dark: {
-        palette: {
-          primary: cyan,
-          secondary: orange,
-        },
-      },
+      // light: {
+      //   palette: {
+      //     primary: teal,
+      //     secondary: deepOrange,
+      //   },
+      // },
+      // dark: {
+      //   palette: {
+      //     primary: cyan,
+      //     secondary: orange,
+      //   },
+      // },
     },
 
     components: {
@@ -50,6 +50,7 @@ const theme = extendTheme(
           root: {
             // Some CSS
             textTransform: "none",
+            borderWidth: "0.5px",
           },
         },
       },
@@ -58,7 +59,7 @@ const theme = extendTheme(
           // Name of the slot
           root: ({ theme }) => {
             return {
-              color: `${theme.palette.primary.main} !important`,
+              // color: `${theme.palette.primary.main} !important`,
               // fontSize: "0.875rem",
             };
           },
@@ -69,7 +70,7 @@ const theme = extendTheme(
           // Name of the slot
           root: ({ theme }) => {
             return {
-              color: theme.palette.primary.main,
+              // color: theme.palette.primary.main,
               fontSize: "0.875rem",
             };
           },
@@ -81,18 +82,21 @@ const theme = extendTheme(
           root: ({ theme }) => {
             // console.log(theme);
             return {
-              color: theme.palette.primary.main,
+              // color: theme.palette.primary.main,
               fontSize: "0.875rem",
-              ".MuiOutlinedInput-notchedOutline": {
-                borderColor: theme.palette.primary.light,
-              },
-              "&:hover": {
-                ".MuiOutlinedInput-notchedOutline": {
-                  borderColor: theme.palette.primary.main,
-                },
-              },
+              // ".MuiOutlinedInput-notchedOutline": {
+              //   borderColor: theme.palette.primary.light,
+              // },
+              // "&:hover": {
+              //   ".MuiOutlinedInput-notchedOutline": {
+              //     borderColor: theme.palette.primary.main,
+              //   },
+              // },
               "& fieldset": {
-                borderWidth: "1px !important",
+                borderWidth: "0.5px ",
+              },
+              "&:hover fieldset": {
+                borderWidth: "1px ",
               },
             };
           },
