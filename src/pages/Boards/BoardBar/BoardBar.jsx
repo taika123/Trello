@@ -11,6 +11,7 @@ import Avatar from "@mui/material/Avatar";
 import Tooltip from "@mui/material/Tooltip";
 import Button from "@mui/material/Button";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { capitalizeFirstLetter } from "~/utils/formatter.js";
 
 const MENU_STYLE = {
   color: "white",
@@ -27,7 +28,10 @@ const MENU_STYLE = {
     overflow: "auto",
   },
 };
-function BoardBar() {
+
+function BoardBar(props) {
+  const { board } = props;
+
   return (
     <Box
       sx={{
@@ -43,7 +47,6 @@ function BoardBar() {
         bgcolor: (theme) => {
           return theme.palette.mode === "dark" ? "#34495e" : "#1976d2";
         },
-        borderBottom: "1px solid #ccc",
       }}
     >
       <Box
@@ -58,14 +61,14 @@ function BoardBar() {
           sx={MENU_STYLE}
           clickable
           icon={<DashboardIcon />}
-          label="Hello Doro"
+          label={board.title}
           variant="outlined"
         />
         <Chip
           sx={MENU_STYLE}
           clickable
           icon={<LockResetIcon />}
-          label="Public/Private Workspace"
+          label={capitalizeFirstLetter(board.type)}
           variant="outlined"
         />
         <Chip
