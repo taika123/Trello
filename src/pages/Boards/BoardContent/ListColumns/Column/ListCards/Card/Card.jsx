@@ -9,8 +9,27 @@ import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import { Box } from "@mui/material";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 function Cards({ card }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: card._id, data: { ...card } });
+
+  const dndKitColumnStyle = {
+    touchAction: "none",
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.66 : undefined,
+  };
+
+  //handle socials bottom card
   const handleCardActions = () => {
     return (
       !!card.memberIds?.length ||
@@ -19,7 +38,12 @@ function Cards({ card }) {
     );
   };
   return (
-    <Box>
+    <Box
+      ref={setNodeRef}
+      style={dndKitColumnStyle}
+      {...attributes}
+      {...listeners}
+    >
       <Card
         sx={{
           cursor: "pointer",
