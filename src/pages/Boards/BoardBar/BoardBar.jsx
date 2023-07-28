@@ -29,8 +29,8 @@ const MENU_STYLE = {
   },
 };
 
-function BoardBar(props) {
-  const { board } = props;
+function BoardBar({ board }) {
+  // const { board } = props;
 
   return (
     <Box

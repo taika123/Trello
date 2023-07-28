@@ -26,7 +26,8 @@ function Cards({ card }) {
     touchAction: "none",
     transform: CSS.Translate.toString(transform),
     transition,
-    opacity: isDragging ? 0.66 : undefined,
+    opacity: isDragging ? 0.8 : undefined,
+    border: isDragging ? "1px solid #9b59b6" : undefined,
   };
 
   //handle socials bottom card

@@ -141,6 +141,8 @@ function AppBar() {
             ),
           }}
         />
+
+        {/* mode light dark */}
         <ModeSelect />
 
         <Tooltip title="Notification">
