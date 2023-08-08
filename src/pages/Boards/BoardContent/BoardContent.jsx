@@ -111,6 +111,85 @@ function BoardContent({ board }) {
     );
   };
 
+  const moveCardDifferent = (
+    overColumn,
+    overCardId,
+    activeColumn,
+    over,
+    active,
+    // activeDraggingCardId,
+    activeDraggingCardData
+  ) => {
+    setOrderedUpdateColumns((prevColumn) => {
+      //tìm vị trí index của overCard trong column đích ( nơi activeCard sắp dc thả)
+      const overCardIndex = overColumn?.cards.findIndex(
+        (card) => card._id === overCardId
+      );
+
+      let newCardIndex;
+
+      const isBelowOverItem =
+        active.rect.current.translated &&
+        active.rect.current.translated.top > over.rect.top + over.rect.height;
+
+      const modifier = isBelowOverItem ? 1 : 0;
+
+      newCardIndex =
+        overCardIndex >= 0
+          ? overCardIndex + modifier
+          : overColumn?.cards?.length + 1;
+
+      // clone mang orderdColumnState cu ra 1 mang moi de xu ly data roi return - update lai
+      const nextColumn = cloneDeep(prevColumn);
+      const nextActiveColumn = nextColumn.find(
+        (column) => column._id === activeColumn._id
+      );
+      const nextOverColumn = nextColumn.find(
+        (column) => column._id === overColumn._id
+      );
+
+      //Column cũ
+      if (nextActiveColumn) {
+        //xóa card ở column active
+        nextActiveColumn.cards = nextActiveColumn.cards.filter(
+          (card) => card._id !== activeDragItemID
+        );
+
+        //cập nhật lại mảng cardOrderIds cho chuẩn dữ liệu
+        nextActiveColumn.cardId = nextActiveColumn.cards.map(
+          (card) => card._id
+        );
+      }
+
+      //Column mới
+      if (nextOverColumn) {
+        //kiem tra xem card dang keo no co ton tai o overColumn chua, neu co thi can xoa no di truoc
+        nextOverColumn.cards = nextOverColumn.cards.filter(
+          (card) => card._id !== activeDragItemID
+        );
+
+        //cap nhat lai data cho chuan du lieu columnId trong card sau khi keo card giua 2 column
+        const rebuild_activeDragItemData = {
+          ...activeDraggingCardData,
+          columnId: nextOverColumn._id,
+        };
+        //tiep theo la them card dang keo vao overColumn theo vi tri index moi
+        nextOverColumn.cards = nextOverColumn.cards.toSpliced(
+          newCardIndex,
+          0,
+          rebuild_activeDragItemData
+        );
+        //cập nhật lại mảng cardOrderIds cho chuẩn dữ liệu
+        nextOverColumn.cardOrderIds = nextOverColumn.cards.map(
+          (card) => card._id
+        );
+      }
+
+      // console.log("nextColumn", nextColumn);
+      return nextColumn;
+    });
+  };
+
   //trigger trong qua trinh keo (drag) 1 phan tu
   const handleDragOver = (e) => {
     //neu keo column thi k return k lam gi ca
@@ -140,67 +219,15 @@ function BoardContent({ board }) {
 
     //khi kéo qua 2 column khác nhau , còn kéo kéo trong column chính nó thì k làm gì cả
     if (activeColumn._id !== overColumn._id) {
-      setOrderedUpdateColumns((prevColumn) => {
-        //tìm vị trí index của overCard trong column đích ( nơi activeCard sắp dc thả)
-        const overCardIndex = overColumn?.cards.findIndex(
-          (card) => card._id === overCardId
-        );
-
-        let newCardIndex;
-
-        const isBelowOverItem =
-          active.rect.current.translated &&
-          active.rect.current.translated.top > over.rect.top + over.rect.height;
-
-        const modifier = isBelowOverItem ? 1 : 0;
-
-        newCardIndex =
-          overCardIndex >= 0
-            ? overCardIndex + modifier
-            : overColumn?.cards?.length + 1;
-
-        // clone mang orderdColumnState cu ra 1 mang moi de xu ly data roi return - update lai
-        const nextColumn = cloneDeep(prevColumn);
-        const nextActiveColumn = nextColumn.find(
-          (column) => column._id === activeColumn._id
-        );
-        const nextOverColumn = nextColumn.find(
-          (column) => column._id === overColumn._id
-        );
-
-        //Column cũ
-        if (nextActiveColumn) {
-          //xóa card ở column active
-          nextActiveColumn.cards = nextActiveColumn.cards.filter(
-            (card) => card._id !== activeDragItemID
-          );
-
-          //cập nhật lại mảng cardOrderIds cho chuẩn dữ liệu
-          nextActiveColumn.cardId = nextActiveColumn.cards.map(
-            (card) => card._id
-          );
-        }
-
-        //Column mới
-        if (nextOverColumn) {
-          //kiem tra xem card dang keo no co ton tai o overColumn chua, neu co thi can xoa no di truoc
-          nextOverColumn.cards = nextOverColumn.cards.filter(
-            (card) => card._id !== activeDragItemID
-          );
-
-          //tiep theo la them card dang keo vao overColumn theo vi tri index moi
-          nextOverColumn.cards = nextOverColumn.cards.toSpliced(
-            newCardIndex,
-            0,
-            activeDragItemData
-          );
-          //cập nhật lại mảng cardOrderIds cho chuẩn dữ liệu
-          nextOverColumn.cardId = nextOverColumn.cards.map((card) => card._id);
-        }
-
-        console.log("nextColumn", nextColumn);
-        return nextColumn;
-      });
+      moveCardDifferent(
+        overColumn,
+        overCardId,
+        activeColumn,
+        over,
+        active,
+        // activeDraggingCardId,
+        activeDraggingCardData
+      );
     }
   };
 
@@ -238,6 +265,15 @@ function BoardContent({ board }) {
       //phai dung toi activeDragItemData.columnId hoac la oldColumnWhenDraggingCard._id (set vao state tu buoc handleDragStart) chu khong phai la activedata trong scope handleDragEnd vi sau khi di qua handleDragOver state da bi cap nhap 1 lan
       if (oldColumnWhenDraggingCard._id !== overColumn._id) {
         // console.log("hanh dong keo tha card giua 2 column khác nhau");
+        moveCardDifferent(
+          overColumn,
+          overCardId,
+          activeColumn,
+          over,
+          active,
+          // activeDraggingCardId,
+          activeDraggingCardData
+        );
       } else {
         // hanh dong keo tha card trong cung column
 
@@ -276,7 +312,7 @@ function BoardContent({ board }) {
 
     //xu ly keo tha column trong boardContent
     if (activeDragItemType === ACTIVE_DRAG_ITEM.COLUMN) {
-      console.log("tam thoi keo tha column ");
+      // console.log("tam thoi keo tha column ");
       //vi tri sau khi keo tha
       if (active.id !== over.id) {
         // lay vi tri cu (tu thang active)
