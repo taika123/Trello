@@ -11,6 +11,7 @@ import {
   PointerSensor,
   DragOverlay,
   defaultDropAnimationSideEffects,
+  closestCorners,
 } from "@dnd-kit/core";
 import { useState } from "react";
 import { useEffect } from "react";
@@ -34,6 +35,8 @@ function BoardContent({ board }) {
   const [activeDragItemID, setactiveDragItemID] = useState(null);
   const [activeDragItemType, setactiveDragItemType] = useState(null);
   const [activeDragItemData, setactiveDragItemData] = useState(null);
+  const [oldColumnWhenDraggingCard, setOldColumnWhenDraggingCard] =
+    useState(null);
 
   //sensor dnd, di chuyen chuot 10px de kich hoat event
   const pointerSensor = useSensor(PointerSensor, {
@@ -79,6 +82,11 @@ function BoardContent({ board }) {
         : ACTIVE_DRAG_ITEM.COLUMN
     );
     setactiveDragItemData(e?.active?.data?.current);
+
+    //neu la keo card thi moi thuc hien hanh dong set gia tri oldColumn
+    if (e?.active?.data?.current?.columnId) {
+      setOldColumnWhenDraggingCard(findColumnByCardId(e?.active?.id));
+    }
   };
   // console.log(activeDragItemID, "activeDragItemID");
   // console.log(activeDragItemType, "activeDragItemType");
@@ -198,44 +206,107 @@ function BoardContent({ board }) {
 
   //khi ket thuc tha (drop)
   const handleDragEnd = (e) => {
-    console.log(e, "handle dragend");
-
-    if (activeDragItemType === ACTIVE_DRAG_ITEM.CARD) {
-      // console.log("tam thoi keo tha card k lam gi ca");
-      return;
-    }
+    // console.log(e, "handle dragend");
 
     const { active, over } = e;
 
     // kiem tra neu over = null thi return
     if (!active || !over) return;
 
-    //vi tri sau khi keo tha
-    if (active.id !== over.id) {
-      // lay vi tri cu (tu thang active)
-      const oldIndex = orderedUpdateColumns.findIndex(
-        (a) => a._id === active.id
-      );
-      // lay vi tri moi (tu thang over)
-      const newIndex = orderedUpdateColumns.findIndex((a) => a._id === over.id);
+    //xu ly keo tha card
+    if (activeDragItemType === ACTIVE_DRAG_ITEM.CARD) {
+      // console.log("tam thoi keo tha card k lam gi ca");
 
-      //array move cua dnd-kit sap xep mang columns ban dau
-      const dndOrderUpdate = arrayMove(
-        orderedUpdateColumns,
-        oldIndex,
-        newIndex
-      );
+      //activeDraggingCard : là cái card đang đc kéo
+      const {
+        id: activeDraggingCardId,
+        data: { current: activeDraggingCardData },
+      } = active;
+      //overCard: là cái card đang tương tác trên hoặc dưới cái card đang được kéo
+      const { id: overCardId } = over;
 
-      //orther call api update database
-      // const dndOrderUpdateColumnIds = dndOrderUpdate.map((c) => c._id);
-      // console.log("dndOrderUpdateColumnIds", dndOrderUpdateColumnIds);
-      setOrderedUpdateColumns(dndOrderUpdate);
+      // tìm 2 cái columns theo cardId
+      const activeColumn = findColumnByCardId(activeDraggingCardId);
+      const overColumn = findColumnByCardId(overCardId);
+
+      //kiem tra neu k ton tai 1 trong 2 columns thi return
+      if (!activeColumn || !overColumn) return;
+
+      //khi kéo qua 2 column khác nhau , còn kéo kéo trong column chính nó thì k làm gì cả
+
+      // hanh dong keo tha card giua 2 column khác nhau
+      //phai dung toi activeDragItemData.columnId hoac la oldColumnWhenDraggingCard._id (set vao state tu buoc handleDragStart) chu khong phai la activedata trong scope handleDragEnd vi sau khi di qua handleDragOver state da bi cap nhap 1 lan
+      if (oldColumnWhenDraggingCard._id !== overColumn._id) {
+        // console.log("hanh dong keo tha card giua 2 column khác nhau");
+      } else {
+        // hanh dong keo tha card trong cung column
+
+        // lay vi tri cu (tu thang oldColumnWhenDraggingCard)
+        const oldCardIndex = oldColumnWhenDraggingCard?.cards?.findIndex(
+          (a) => a._id === activeDragItemID
+        );
+        // lay vi tri moi (tu thang overColumn)
+        const newCardIndex = overColumn?.cards?.findIndex(
+          (a) => a._id === overCardId
+        );
+
+        //array move cua dnd-kit sap xep mang columns ban dau
+        const dndOrderedCard = arrayMove(
+          oldColumnWhenDraggingCard?.cards,
+          oldCardIndex,
+          newCardIndex
+        );
+        setOrderedUpdateColumns((prevColumn) => {
+          // clone mang orderdColumnState cu ra 1 mang moi de xu ly data roi return - update lai
+          const nextColumn = cloneDeep(prevColumn);
+          //tim toi column ma ta dang tha
+          const targetColumn = nextColumn.find(
+            (column) => column._id === overColumn._id
+          );
+
+          //cap nhat lai 2 gia tri moi la card va cardOrderIds trong cai targetColumn
+          targetColumn.cards = dndOrderedCard;
+          targetColumn.cardOrderIds = dndOrderedCard.map((card) => card._id);
+
+          //tra ve gia tri state moi
+          return nextColumn;
+        });
+      }
+    }
+
+    //xu ly keo tha column trong boardContent
+    if (activeDragItemType === ACTIVE_DRAG_ITEM.COLUMN) {
+      console.log("tam thoi keo tha column ");
+      //vi tri sau khi keo tha
+      if (active.id !== over.id) {
+        // lay vi tri cu (tu thang active)
+        const oldColumnIndex = orderedUpdateColumns.findIndex(
+          (a) => a._id === active.id
+        );
+        // lay vi tri moi (tu thang over)
+        const newColumnIndex = orderedUpdateColumns.findIndex(
+          (a) => a._id === over.id
+        );
+
+        //array move cua dnd-kit sap xep mang columns ban dau
+        const dndOrderUpdate = arrayMove(
+          orderedUpdateColumns,
+          oldColumnIndex,
+          newColumnIndex
+        );
+
+        //orther call api update database
+        // const dndOrderUpdateColumnIds = dndOrderUpdate.map((c) => c._id);
+        // console.log("dndOrderUpdateColumnIds", dndOrderUpdateColumnIds);
+        setOrderedUpdateColumns(dndOrderUpdate);
+      }
     }
 
     //
     setactiveDragItemID(null);
     setactiveDragItemType(null);
     setactiveDragItemData(null);
+    setOldColumnWhenDraggingCard(null);
   };
 
   return (
@@ -244,6 +315,8 @@ function BoardContent({ board }) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       sensors={sensor}
+      // Collision detection algorithms(phat hien va cham)
+      collisionDetection={closestCorners}
     >
       <Box
         sx={{
