@@ -6,6 +6,7 @@ import AddCardIcon from "@mui/icons-material/AddCard";
 import {
   SortableContext,
   horizontalListSortingStrategy,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
 function ListColumns({ columns }) {
@@ -13,6 +14,7 @@ function ListColumns({ columns }) {
     <SortableContext
       items={columns?.map((c) => c._id)}
       strategy={horizontalListSortingStrategy}
+      // strategy={verticalListSortingStrategy}
     >
       <Box
         sx={{

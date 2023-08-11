@@ -1,5 +1,5 @@
 import Box from "@mui/material/Box";
-import React from "react";
+import React, { useCallback, useRef } from "react";
 import ListColumns from "./ListColumns/ListColumns";
 import { mapOrder } from "~/utils/sorts";
 import {
@@ -12,6 +12,10 @@ import {
   DragOverlay,
   defaultDropAnimationSideEffects,
   closestCorners,
+  pointerWithin,
+  rectIntersection,
+  getFirstCollision,
+  closestCenter,
 } from "@dnd-kit/core";
 import { useState } from "react";
 import { useEffect } from "react";
@@ -38,6 +42,9 @@ function BoardContent({ board }) {
   const [oldColumnWhenDraggingCard, setOldColumnWhenDraggingCard] =
     useState(null);
 
+  //diem va cham cuoi cung xu ly thuat toan phat hien va cham
+  const lastOverId = useRef(null);
+
   //sensor dnd, di chuyen chuot 10px de kich hoat event
   const pointerSensor = useSensor(PointerSensor, {
     // Require the mouse to move by 10 pixels before activating
@@ -49,7 +56,7 @@ function BoardContent({ board }) {
   // toi uu performation khi keo tha bang chuot
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
-      distance: 10,
+      distance: 5,
     },
   });
 
@@ -57,7 +64,7 @@ function BoardContent({ board }) {
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
       delay: 250,
-      tolerance: 5,
+      tolerance: 500,
     },
   });
 
@@ -345,6 +352,50 @@ function BoardContent({ board }) {
     setOldColumnWhenDraggingCard(null);
   };
 
+  //fix bug dragging card flickering
+  const collisionDetectionStrategy = useCallback((args) => {
+    if (activeDragItemType === ACTIVE_DRAG_ITEM.COLUMN) {
+      return closestCorners({ ...args });
+    }
+
+    //tim cac diem va cham , giao thoa voi con tro
+    const pointerIntersections = pointerWithin(args);
+
+    //thuat toan phat hien va cham se tra ve 1 mang cac va cham
+    const intersections = !!pointerIntersections?.length
+      ? pointerIntersections
+      : rectIntersection(args);
+
+    // console.log("intersections", intersections);
+
+    //tim overId dau tien trang dam intersections
+    let overId = getFirstCollision(intersections, "id");
+    // console.log("overId", overId);
+    if (overId) {
+      // nếu cái over nó là column thì nó sẽ tìm tới cái cardId gần nhất bên trong khu vực va chạm đó dựa vào thuật toán phát hiện va chạm closestCenter hoặc closestConners đều được. tuy nhiên ở đây dùng closestCenter sẽ mượt mà hơn
+      const checkColumn = orderedUpdateColumns.find(
+        (column) => column._id === overId
+      );
+      if (checkColumn) {
+        console.log("overId before", overId);
+        overId = closestCenter({
+          ...args,
+          droppableContainers: args.droppableContainers.filter(
+            (container) =>
+              container.id != overId &&
+              checkColumn?.cardOrderIds?.includes(container.id)
+          ),
+        })[0]?.id;
+        console.log("overId after", overId);
+      }
+      lastOverId.current = overId;
+      return [{ id: overId }];
+    }
+
+    //neu overId la null thi tra ve mang rong
+    return lastOverId.current ? [{ id: lastOverId.current }] : [];
+  }, []);
+
   return (
     <DndContext
       onDragStart={handleDragStart}
@@ -352,7 +403,8 @@ function BoardContent({ board }) {
       onDragEnd={handleDragEnd}
       sensors={sensor}
       // Collision detection algorithms(phat hien va cham)
-      collisionDetection={closestCorners}
+      // collisionDetection={closestCorners}
+      collisionDetection={collisionDetectionStrategy}
     >
       <Box
         sx={{
