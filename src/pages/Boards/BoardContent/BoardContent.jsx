@@ -24,7 +24,8 @@ import { arrayMove } from "@dnd-kit/sortable";
 import Column from "./ListColumns/Column/Column";
 import Cards from "./ListColumns/Column/ListCards/Card/Card";
 
-import { cloneDeep } from "lodash";
+import { cloneDeep, isEmpty } from "lodash";
+import { generatePlaceholderCard } from "../../../utils/formatter";
 
 const ACTIVE_DRAG_ITEM = {
   COLUMN: "ACTIVE_DRAG_ITEM_COLUMN",
@@ -130,7 +131,7 @@ function BoardContent({ board }) {
     setOrderedUpdateColumns((prevColumn) => {
       //tìm vị trí index của overCard trong column đích ( nơi activeCard sắp dc thả)
       const overCardIndex = overColumn?.cards.findIndex(
-        (card) => card._id === overCardId
+        (card) => card?._id === overCardId
       );
 
       let newCardIndex;
@@ -162,6 +163,12 @@ function BoardContent({ board }) {
           (card) => card._id !== activeDragItemID
         );
 
+        // thêm playholder card nếu column rỗng: bị kéo hết card đi, k còn cái nào
+        if (isEmpty(nextActiveColumn.cards)) {
+          // console.log("card cuoi cung bi keo di");
+          nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)];
+        }
+
         //cập nhật lại mảng cardOrderIds cho chuẩn dữ liệu
         nextActiveColumn.cardId = nextActiveColumn.cards.map(
           (card) => card._id
@@ -186,6 +193,12 @@ function BoardContent({ board }) {
           0,
           rebuild_activeDragItemData
         );
+
+        // xoa cái placeholder card đi nếu nó đang tồn tại
+        nextOverColumn.cards = nextOverColumn.cards.filter(
+          (card) => !card.FE_Placeholder
+        );
+
         //cập nhật lại mảng cardOrderIds cho chuẩn dữ liệu
         nextOverColumn.cardOrderIds = nextOverColumn.cards.map(
           (card) => card._id
@@ -360,16 +373,20 @@ function BoardContent({ board }) {
 
     //tim cac diem va cham , giao thoa voi con tro
     const pointerIntersections = pointerWithin(args);
+    if (!pointerIntersections?.length > 0) {
+      // console.log("pointerIntersections:", pointerIntersections);
+      return;
+    }
 
-    //thuat toan phat hien va cham se tra ve 1 mang cac va cham
-    const intersections = !!pointerIntersections?.length
-      ? pointerIntersections
-      : rectIntersection(args);
+    //thuat toan phat hien va cham se tra ve 1 mang cac va cham ( k can buoc nay nua vi da fix )
+    // const intersections = !!pointerIntersections?.length
+    //   ? pointerIntersections
+    //   : rectIntersection(args);
 
     // console.log("intersections", intersections);
 
     //tim overId dau tien trang dam intersections
-    let overId = getFirstCollision(intersections, "id");
+    let overId = getFirstCollision(pointerIntersections, "id");
     // console.log("overId", overId);
     if (overId) {
       // nếu cái over nó là column thì nó sẽ tìm tới cái cardId gần nhất bên trong khu vực va chạm đó dựa vào thuật toán phát hiện va chạm closestCenter hoặc closestConners đều được. tuy nhiên ở đây dùng closestCenter sẽ mượt mà hơn
@@ -378,7 +395,7 @@ function BoardContent({ board }) {
       );
       if (checkColumn) {
         console.log("overId before", overId);
-        overId = closestCenter({
+        overId = closestCorners({
           ...args,
           droppableContainers: args.droppableContainers.filter(
             (container) =>
